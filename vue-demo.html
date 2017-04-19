@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>vuetable - Bootstrap</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+    <style media="screen">
+    </style>
+    <body style="padding:50px;">
+        <div id="table">
+            <table class="table table-class">
+              <thead>
+                <tr>
+                   <th v-for="todo in tableTitle">{{ todo }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="info,index in Allinfo">
+                  <td v-show="!Allinfo">{{index}}</td>
+                  <td> <input type="text"   v-model="Allinfo[index].name"></td>
+                  <td> <input type="text"   v-model="Allinfo[index].beizhu"></td>
+                  <td> <input type="number" v-model="Allinfo[index].mianji"></td>
+                  <td> <input type="number" v-model="Allinfo[index].youyao"></td>
+                  <td> <input type="number" v-model="Allinfo[index].nongyao"></td>
+                  <td> <input type="number" v-model="Allinfo[index].yongfei"></td>
+                  <td> <input type="number" v-model="Allinfo[index].feiliao"></td>
+                  <td>
+                      <a class="btn btn-info" href="javascript:void(0)" @click="remove(info)" v-show="Allinfo.length!=1">del</a>
+                      <a class="btn btn-info" href="javascript:void(0)" @click="addView(info)">add</a>
+                  </td>
+                </tr>
+              </tbody>
+              <br> <br>
+              <tfoot>
+                  <tr>
+                    <td>總面積：  {{ totalCount.Allmianji }} </td>
+                  </tr>
+                  <tr>
+                      <td>總需求： {{ totalCount.Allxuqiu }}</td>
+                      <td>( {{ totalCount.Allnongyao }} 萬農藥 {{ totalCount.Allfeiyao}}萬肥料 )</td>
+                  </tr>
+              </tfoot>
+            </table>
+            <pre>
+              {{Allinfo}}
+            </pre>
+        </div>
+    </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.1/vue.js"></script>
+    <script>
+    new Vue({
+        el: '#table',
+        data: {
+          totalCount:{Allmianji : '',Allxuqiu : '',Allnongyao : '',  Allfeiyao : ''},
+          tableTitle: ["作物","備註","面積","用藥水平","農藥需求","用肥水平","肥料需求","操作"],
+          Allinfo : [
+            {"name":'農作物',"beizhu": '好的芒果',"mianji":0,"youyao":0,"nongyao":0,"yongfei":0,"feiliao":0},
+            {"name":'農作物',"beizhu": '好的芒果',"mianji":0,"youyao":0,"nongyao":0,"yongfei":0,"feiliao":0}
+          ],
+        },
+        watch: {
+           Allinfo:{
+　　　　　　　   handler(curVal,oldVal){
+                   var CountmianjiNum = 0;CountnongyaoNum=0;CountfeiliaoNum=0;c='';
+                   for(var i=0;i<this.Allinfo.length;i++){
+                       CountmianjiNum += isNaN(parseInt(this.Allinfo[i]['mianji'])) ? 0 : parseInt(this.Allinfo[i]['mianji']);
+                       CountnongyaoNum += isNaN(parseInt(this.Allinfo[i]['nongyao'])) ? 0 : parseInt(this.Allinfo[i]['nongyao']);
+                       CountfeiliaoNum += isNaN(parseInt(this.Allinfo[i]['yongfei'])) ? 0 : parseInt(this.Allinfo[i]['yongfei']);
+                        for(b in this.Allinfo[i]){
+                          c = b;
+                          if(c=="name"||  c=='beizhu'){
+                          }else {
+                            this.Allinfo[i][c] = this.Allinfo[i][c]<0 ? 0 : this.Allinfo[i][c]*1;
+                          }
+                        }
+                   };
+                   this.totalCount.Allmianji = CountmianjiNum;
+                   this.totalCount.Allnongyao = CountnongyaoNum;
+                   this.totalCount.Allfeiyao = CountfeiliaoNum;
+                   this.totalCount.Allxuqiu = CountnongyaoNum + CountfeiliaoNum;
+　　　　　　　   },
+　　　　　　　   deep:true
+　　　　　   }
+       },
+        methods: {
+          remove: function (item) {
+           this.Allinfo.splice(this.Allinfo.indexOf(item), 1);
+         },
+         addView : function(){
+           if(this.Allinfo.length ==5){
+             return;
+           }
+           this.Allinfo.push({"name":'新農作物',"beizhu":"描述農作物","mianji":0,"yongyao":0,"nongyao":0,"yongfei":0,"feiliao":0});
+         }
+       }
+    });
+    // 處理輸入001 不強制轉換1的問題
+    $("input").keyup(function(){
+        var b = $(this).val()*1;
+        $(this).val(b);
+    })
+    </script>
+  </body>
+</html>
