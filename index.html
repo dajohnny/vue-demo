@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>vue-table</title>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/bootstrap/3.3.7/css/bootstrap.min.css">
+
+</head>
+<body style="padding: 30px;">
+	
+	<div id="app">
+	    <my-table :tabledata=tabledata></my-table>
+	    <br><br>
+	    <!-- <my-table></my-table> -->
+	</div>
+
+	<!-- 核心組件ALL -->
+	<template id="grid-template">
+		<div>
+			<tabletemp :tabledata='tabledata' @tableinc=tableincfn></tabletemp>
+			<pagetemp :page='page' @pagechange="pageChangefn"></pagetemp>
+		</div>
+	</template>
+
+	<!-- table組件 -->
+	<template id="tabletemp">
+		<div>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>id</th>
+						<th>no</th>
+						<th>address</th>
+						<th>name</th>
+						<th>line1</th>
+						<th>line2</th>
+						<th>電話</th>
+					</tr>
+				</thead>
+				<tbody>
+                    <template v-for="n in dataList.data">
+						<tr>
+							<template v-for="b in n.address">
+								<template>
+									<td>{{b}}</td>
+								</template>
+							</template>
+						</tr>
+                    </template>
+				</tbody>
+			</table>
+		</div>
+	</template>
+	
+	<!-- 頁號組件 -->
+	<template id="pagetemp">
+		<div class="btn-group">
+			<a @click="loadPage(1)" :class="['btn','btn-default',isOnFirstPage?disabledClass:'']"> 
+			    <span>«</span>
+			</a>
+			<a @click="loadPage('prev')" :class="['btn','btn-default',isOnFirstPage?disabledClass : '']"> 
+			        <span>&nbsp;‹</span> 
+			    </a>
+			<a v-for="n in page.last_page" :class="['btn','btn-default',page.current_page==n?'active':'']" @click="loadPage(n)"> {{n}} </a>
+			<a @click="loadPage('next')" :class="['btn','btn-default',isOnLastPage ? disabledClass : '']">
+			<span>›&nbsp;</span>
+		    </a>
+		    <a @click="loadPage('total')" :class="['btn','btn-default',isOnLastPage ? disabledClass : '']">
+		        <span>»</span>
+		    </a>
+		</div>
+	</template>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+	<script src="//cdn.bootcss.com/vue/2.2.6/vue.js"></script>
+	<script>
+	
+	var  tabletemp = {
+	    template: '#tabletemp',
+	    props:['tabledata'],
+	    data: function() {
+	        return {
+	        	dataList : ''
+	        }
+	    },
+	    mounted:function(){
+	    	this.getDataList();
+	    },
+	    methods: {
+	    	getDataList : function() {
+	    		var _this = this;
+				$.ajax({
+					url: _this.tabledata.apiurl,
+					type: 'GET',
+					dataType: 'json',
+					data : _this.tabledata.ajax,
+					success: function(data, textStatus, xhr) {
+						_this.dataList = data;
+
+						_this.$emit('tableinc',_this.dataList);
+					},
+					error: function(xhr, textStatus, errorThrown) {
+
+					}
+				});
+			}
+	    },
+	    watch :{
+		    'tabledata.ajax': {
+		      handler: function (val, oldVal) { 
+		      	console.log("你看這兩個數值都是一樣的");
+		      	console.log(val);
+		      	console.log(oldVal);
+		        this.getDataList();
+		      },
+		      deep: true
+		    }
+		  }
+	};
+
+	var  pagetemp = {
+	    template: '#pagetemp',
+	    props: {
+		    page: [String, Number,Object,Array],
+		    disabledClass: {
+		      type: String,
+		      default: function() {
+		          return 'disabled';
+		      }
+		    }
+		},
+	    data: function() {
+	        return {
+	        }
+	    },
+	    computed:{
+	    	isOnFirstPage: function() {
+	    		console.log(this.page.current_page);
+		    	return this.page == null ? false : this.page.current_page == 1;
+		    },
+		    isOnLastPage: function() {
+		        return this.page == null ? false : this.page.current_page == this.page.last_page;
+		    },
+	    },
+	    methods:{
+	    	loadPage:function(n){
+	    		console.log(n);
+	    		var c = this.page.current_page;
+				if(n=='prev'){ 
+					c--;
+				}else if(n=='next'){ 
+					c++;
+				}else if(n=='total'){
+					c = this.page.last_page;
+				}else{
+					c = n;
+				}
+				console.log( c );
+	    		this.$emit("pagechange",c);
+	    	}
+	    }
+	};
+
+	Vue.component('myTable', {
+		template : '#grid-template',
+		props: ['tabledata'],
+		data: function() {
+			return {
+				page :{
+					count : 3
+				}
+			}
+		},
+		components:{
+			'pagetemp'  : pagetemp,
+		    'tabletemp' : tabletemp
+		},
+		mounted:function(){
+			this.$on('tableinc',this.tableincfn);
+			this.$on('pagechange',this.pageChangefn);
+		},
+		methods :{
+			tableincfn:function(a){
+				this.page = a;
+			},
+			pageChangefn : function(a){
+		    	this.tabledata.ajax.page = a;
+		    }
+		}
+	});
+	
+	new Vue({
+	    el: "#app",
+	    data :{
+	    	info : "I'm a message about u ",
+	    	tabledata : {
+	    		ajax : {
+	    			page : 1,
+	    			per_page : 10
+	    		},
+	    		apiurl : 'http://vuetable.ratiw.net/api/users'
+	    	}
+	    }
+	});
+
+</script>
+</body>
+</html>
